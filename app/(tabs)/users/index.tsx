@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,14 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
+  TextInput,
   Alert,
   Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getUsers, promoteUser, demoteUser, deleteUser, User } from '../../lib/api';
-import { getToken } from '../../lib/storage';
+import { getUsers, promoteUser, demoteUser, deleteUser, User } from '../../../lib/api';
+import { getToken } from '../../../lib/storage';
 
 function getCurrentUserId(): Promise<number | null> {
   return getToken().then(token => {
@@ -27,12 +29,20 @@ function getCurrentUserId(): Promise<number | null> {
 }
 
 export default function UsersScreen() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(u => u.name?.toLowerCase().includes(q));
+  }, [users, search]);
 
   async function fetchUsers() {
     try {
@@ -64,17 +74,12 @@ export default function UsersScreen() {
       delete:  { title: 'Delete User', btn: 'Delete' },
     };
     const { title, btn } = labels[action];
-
     Alert.alert(
       title,
       `${user.name || user.id.toString()}\n\nThis will queue the command on all devices the user is enrolled on.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: btn,
-          style: action === 'delete' ? 'destructive' : 'default',
-          onPress: () => runAction(user, action),
-        },
+        { text: btn, style: action === 'delete' ? 'destructive' : 'default', onPress: () => runAction(user, action) },
       ],
     );
   }
@@ -127,13 +132,14 @@ export default function UsersScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={users}
+        data={filteredUsers}
         keyExtractor={item => item.id.toString()}
         renderItem={({ item }) => (
           <UserRow
             user={item}
             isPending={pendingId === item.id.toString()}
             isSelf={currentUserId === item.id}
+            onPress={() => router.push(`/(tabs)/users/${item.id}`)}
             onPromote={() => confirmAction(item, 'promote')}
             onDemote={() => confirmAction(item, 'demote')}
             onDelete={() => confirmAction(item, 'delete')}
@@ -143,14 +149,30 @@ export default function UsersScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e53935" />
         }
         ListHeaderComponent={
-          <View style={styles.statsRow}>
-            <StatChip label="Total" value={users.length} />
-            <StatChip label="Active" value={activeUsers.length} color="#4caf50" />
-            <StatChip label="Admins" value={users.filter(u => u.role === 'admin' && u.active).length} color="#e53935" />
-            <StatChip label="Inactive" value={inactiveUsers.length} color="#555" />
+          <View>
+            <View style={styles.statsRow}>
+              <StatChip label="Total" value={users.length} />
+              <StatChip label="Active" value={activeUsers.length} color="#4caf50" />
+              <StatChip label="Admins" value={users.filter(u => u.role === 'admin' && u.active).length} color="#e53935" />
+              <StatChip label="Inactive" value={inactiveUsers.length} color="#555" />
+            </View>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name..."
+              placeholderTextColor="#444"
+              value={search}
+              onChangeText={setSearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+            />
           </View>
         }
-        ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {search ? 'No users match your search.' : 'No users found.'}
+          </Text>
+        }
         contentContainerStyle={styles.list}
       />
     </View>
@@ -167,17 +189,18 @@ function StatChip({ label, value, color = '#888' }: { label: string; value: numb
 }
 
 function UserRow({
-  user, isPending, isSelf, onPromote, onDemote, onDelete,
+  user, isPending, isSelf, onPress, onPromote, onDemote, onDelete,
 }: {
   user: User;
   isPending: boolean;
   isSelf: boolean;
+  onPress: () => void;
   onPromote: () => void;
   onDemote: () => void;
   onDelete: () => void;
 }) {
   return (
-    <View style={[styles.row, !user.active && styles.rowInactive]}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={[styles.row, !user.active && styles.rowInactive]}>
       <View style={styles.rowTop}>
         <Text style={styles.userName}>
           {user.name || '(unnamed)'}
@@ -193,9 +216,9 @@ function UserRow({
             <Text style={styles.inactiveText}>inactive</Text>
           </View>
         )}
+        <Ionicons name="chevron-forward" size={14} color="#333" />
       </View>
 
-      <Text style={styles.userId} numberOfLines={1}>{user.id}</Text>
       <Text style={styles.meta}>
         Enrolled by: {user.enrolled_by || '—'}
         {'  ·  '}
@@ -218,7 +241,7 @@ function UserRow({
           )}
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -241,6 +264,17 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0d0d0d', justifyContent: 'center', alignItems: 'center', padding: 24 },
   list: { padding: 12 },
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  searchInput: {
+    backgroundColor: '#141414',
+    borderWidth: 1,
+    borderColor: '#1e1e1e',
+    borderRadius: 8,
+    color: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    marginBottom: 12,
+  },
   row: {
     backgroundColor: '#141414', borderRadius: 10, padding: 14,
     marginBottom: 10, borderWidth: 1, borderColor: '#1e1e1e',
@@ -254,7 +288,6 @@ const styles = StyleSheet.create({
   roleTextAdmin: { color: '#e57373' },
   inactiveBadge: { backgroundColor: '#1a1a1a', borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 },
   inactiveText: { color: '#555', fontSize: 11 },
-  userId: { color: '#444', fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', marginBottom: 3 },
   meta: { color: '#555', fontSize: 12 },
   actions: {
     flexDirection: 'row', gap: 16, marginTop: 10,

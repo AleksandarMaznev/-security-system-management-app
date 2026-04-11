@@ -13,7 +13,8 @@ export default function RootLayout() {
       if (!token && inTabs) {
         router.replace('/login');
       } else if (token && !inTabs) {
-        router.replace('/(tabs)/users');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        router.replace('/(tabs)/dashboard' as any);
       }
     });
   }, []);

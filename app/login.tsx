@@ -35,7 +35,7 @@ export default function LoginScreen() {
       console.log('[login] saving token...');
       await saveToken(access_token);
       console.log('[login] navigating to tabs...');
-      router.replace('/(tabs)/users');
+      router.replace('/(tabs)/dashboard');
       console.log('[login] navigation called');
     } catch (e: unknown) {
       console.log('[login] error:', e);

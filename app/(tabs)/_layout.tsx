@@ -47,9 +47,19 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           title: 'Users',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),

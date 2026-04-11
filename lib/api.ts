@@ -40,6 +40,15 @@ export interface Device {
   status: string | null;
 }
 
+export interface UserFingerprint {
+  id: number;
+  device_id: string;
+  fingerprint_id: number;
+  enrolled_at: string;
+  active: boolean;
+  devices: Device | null;
+}
+
 // ─── Fetch helpers ────────────────────────────────────────────────────────────
 
 async function authFetch(path: string, options: RequestInit = {}): Promise<unknown> {
@@ -133,13 +142,19 @@ export async function getUsers(): Promise<{ users: User[] }> {
   return authFetch('/api/mobile/users') as Promise<{ users: User[] }>;
 }
 
+export async function getUserDetail(id: number): Promise<{ user: User; fingerprints: UserFingerprint[] }> {
+  return authFetch(`/api/mobile/users?id=${id}`) as Promise<{ user: User; fingerprints: UserFingerprint[] }>;
+}
+
 export async function getLogs(params: {
   device_id?: string;
+  user_id?: number;
   limit?: number;
   offset?: number;
 } = {}): Promise<{ logs: Log[] }> {
   const q = new URLSearchParams();
   if (params.device_id) q.set('device_id', params.device_id);
+  if (params.user_id != null) q.set('user_id', String(params.user_id));
   if (params.limit != null) q.set('limit', String(params.limit));
   if (params.offset != null) q.set('offset', String(params.offset));
   const qs = q.toString();
