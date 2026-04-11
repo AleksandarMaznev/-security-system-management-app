@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "SecSys Admin",
+    "slug": "security-system-admin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "secsys",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.secsys.admin"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d0d0d"
+      },
+      "package": "com.secsys.admin"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
