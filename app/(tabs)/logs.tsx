@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { getLogs, Log } from '../../lib/api';
+import { useTheme } from '../../lib/theme';
 
 const PAGE_SIZE = 50;
 
@@ -24,6 +25,7 @@ export default function LogsScreen() {
   const [appliedFilter, setAppliedFilter] = useState('');
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(true);
+  const { colors } = useTheme();
 
   async function fetchLogs(reset: boolean, filter: string) {
     try {
@@ -80,17 +82,17 @@ export default function LogsScreen() {
 
   function resultColor(result: string): string {
     if (result === 'success') return '#4caf50';
-    if (result === 'fail') return '#e53935';
+    if (result === 'fail') return colors.accent;
     return '#ff9800';
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.filterRow}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.filterRow, { backgroundColor: colors.bg }]}>
         <TextInput
-          style={styles.filterInput}
+          style={[styles.filterInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.text }]}
           placeholder="Filter by device ID..."
-          placeholderTextColor="#444"
+          placeholderTextColor={colors.placeholderText}
           value={deviceFilter}
           onChangeText={setDeviceFilter}
           onSubmitEditing={applyFilter}
@@ -98,28 +100,35 @@ export default function LogsScreen() {
           autoCorrect={false}
           returnKeyType="search"
         />
-        <TouchableOpacity style={styles.filterBtn} onPress={applyFilter}>
-          <Text style={styles.filterBtnText}>Apply</Text>
+        <TouchableOpacity style={[styles.filterBtn, { backgroundColor: colors.filterBtnBg }]} onPress={applyFilter}>
+          <Text style={[styles.filterBtnText, { color: colors.filterBtnText }]}>Apply</Text>
         </TouchableOpacity>
         {appliedFilter ? (
           <TouchableOpacity
-            style={styles.clearBtn}
-            onPress={() => { setDeviceFilter(''); setAppliedFilter(''); setLoading(true); offsetRef.current = 0; hasMoreRef.current = true; fetchLogs(true, '').finally(() => setLoading(false)); }}
+            style={[styles.clearBtn, { backgroundColor: colors.filterBtnBg }]}
+            onPress={() => {
+              setDeviceFilter('');
+              setAppliedFilter('');
+              setLoading(true);
+              offsetRef.current = 0;
+              hasMoreRef.current = true;
+              fetchLogs(true, '').finally(() => setLoading(false));
+            }}
           >
-            <Text style={styles.clearBtnText}>✕</Text>
+            <Text style={[styles.clearBtnText, { color: colors.accent }]}>✕</Text>
           </TouchableOpacity>
         ) : null}
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#e53935" size="large" />
+          <ActivityIndicator color={colors.accent} size="large" />
         </View>
       ) : error ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={applyFilter} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
+          <Text style={[styles.errorText, { color: colors.accent }]}>{error}</Text>
+          <TouchableOpacity onPress={applyFilter} style={[styles.retryBtn, { backgroundColor: colors.filterBtnBg }]}>
+            <Text style={[styles.retryText, { color: colors.filterBtnText }]}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -127,33 +136,33 @@ export default function LogsScreen() {
           data={logs}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.row}>
+            <View style={[styles.row, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <View style={styles.rowTop}>
                 <View style={[styles.resultBadge, { backgroundColor: resultColor(item.result) + '20' }]}>
                   <Text style={[styles.resultText, { color: resultColor(item.result) }]}>
                     {item.result.toUpperCase()}
                   </Text>
                 </View>
-                <Text style={styles.time}>{new Date(item.timestamp).toLocaleString()}</Text>
+                <Text style={[styles.time, { color: colors.textSecondary }]}>{new Date(item.timestamp).toLocaleString()}</Text>
               </View>
-              <Text style={styles.mono}>Fingerprint: {item.fingerprint_id}</Text>
-              <Text style={styles.mono}>Device: {item.device_id}</Text>
+              <Text style={[styles.mono, { color: colors.textSecondary }]}>Fingerprint: {item.fingerprint_id}</Text>
+              <Text style={[styles.mono, { color: colors.textSecondary }]}>Device: {item.device_id}</Text>
               {!!item.role_at_time && (
-                <Text style={styles.metaText}>Role: {item.role_at_time}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>Role: {item.role_at_time}</Text>
               )}
             </View>
           )}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e53935" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator color="#e53935" style={{ margin: 16 }} />
+              <ActivityIndicator color={colors.accent} style={{ margin: 16 }} />
             ) : null
           }
-          ListEmptyComponent={<Text style={styles.emptyText}>No logs found.</Text>}
+          ListEmptyComponent={<Text style={[styles.emptyText, { color: colors.textSecondary }]}>No logs found.</Text>}
           contentContainerStyle={styles.list}
         />
       )}
@@ -162,61 +171,35 @@ export default function LogsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d0d0d' },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   filterRow: { flexDirection: 'row', padding: 12, gap: 8, alignItems: 'center' },
   filterInput: {
     flex: 1,
-    backgroundColor: '#141414',
     borderWidth: 1,
-    borderColor: '#1e1e1e',
     borderRadius: 6,
-    color: '#fff',
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 13,
   },
-  filterBtn: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  filterBtnText: { color: '#aaa', fontSize: 13 },
-  clearBtn: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  clearBtnText: { color: '#e53935', fontSize: 13 },
+  filterBtn: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
+  filterBtnText: { fontSize: 13 },
+  clearBtn: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 10 },
+  clearBtnText: { fontSize: 13 },
   list: { padding: 12 },
-  row: {
-    backgroundColor: '#141414',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#1e1e1e',
-  },
-  rowTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
+  row: { borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1 },
+  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   resultBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
   resultText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  time: { color: '#555', fontSize: 12 },
+  time: { fontSize: 12 },
   mono: {
-    color: '#777',
     fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     marginBottom: 2,
   },
-  metaText: { color: '#555', fontSize: 12, marginTop: 2 },
-  errorText: { color: '#e53935', fontSize: 15, marginBottom: 16, textAlign: 'center' },
-  retryBtn: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-  retryText: { color: '#aaa' },
-  emptyText: { color: '#555', textAlign: 'center', marginTop: 40 },
+  metaText: { fontSize: 12, marginTop: 2 },
+  errorText: { fontSize: 15, marginBottom: 16, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  retryText: {},
+  emptyText: { textAlign: 'center', marginTop: 40 },
 });

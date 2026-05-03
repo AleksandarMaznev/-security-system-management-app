@@ -12,14 +12,17 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { login } from '../lib/api';
 import { saveToken } from '../lib/storage';
+import { useTheme } from '../lib/theme';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { isDark, colors, toggle } = useTheme();
 
   async function handleLogin() {
     if (!username.trim() || !password) {
@@ -49,24 +52,32 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      style={[styles.flex, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <TouchableOpacity style={styles.themeToggle} onPress={toggle} activeOpacity={0.7}>
+          <Ionicons
+            name={isDark ? 'sunny-outline' : 'moon-outline'}
+            size={22}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+
         <View style={styles.header}>
-          <Text style={styles.title}>SECSYS</Text>
-          <Text style={styles.subtitle}>Admin Management Portal</Text>
+          <Text style={[styles.title, { color: colors.accent }]}>SECSYS</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Admin Management Portal</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>USERNAME</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>USERNAME</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.bgInput, borderColor: colors.borderLight, color: colors.text }]}
             placeholder="Enter username"
-            placeholderTextColor="#444"
+            placeholderTextColor={colors.placeholderText}
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -74,11 +85,11 @@ export default function LoginScreen() {
             returnKeyType="next"
           />
 
-          <Text style={styles.label}>PASSWORD</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>PASSWORD</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.bgInput, borderColor: colors.borderLight, color: colors.text }]}
             placeholder="Enter password"
-            placeholderTextColor="#444"
+            placeholderTextColor={colors.placeholderText}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -87,7 +98,7 @@ export default function LoginScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
             activeOpacity={0.8}
@@ -105,22 +116,26 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#0d0d0d' },
+  flex: { flex: 1 },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 28,
     paddingVertical: 48,
   },
+  themeToggle: {
+    position: 'absolute',
+    top: 48,
+    right: 28,
+    padding: 8,
+  },
   header: { marginBottom: 48 },
   title: {
-    color: '#e53935',
     fontSize: 36,
     fontWeight: '800',
     letterSpacing: 6,
   },
   subtitle: {
-    color: '#555',
     fontSize: 12,
     letterSpacing: 2,
     marginTop: 4,
@@ -128,24 +143,19 @@ const styles = StyleSheet.create({
   },
   form: {},
   label: {
-    color: '#555',
     fontSize: 10,
     letterSpacing: 1.5,
     marginBottom: 6,
     marginTop: 16,
   },
   input: {
-    backgroundColor: '#141414',
     borderWidth: 1,
-    borderColor: '#222',
     borderRadius: 6,
-    color: '#fff',
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 13,
   },
   button: {
-    backgroundColor: '#e53935',
     borderRadius: 6,
     paddingVertical: 15,
     alignItems: 'center',

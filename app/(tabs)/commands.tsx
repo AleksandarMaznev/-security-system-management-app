@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { getCommands, Command } from '../../lib/api';
+import { useTheme } from '../../lib/theme';
 
 const PAGE_SIZE = 50;
 const STATUS_FILTERS = ['all', 'pending', 'acknowledged', 'expired'] as const;
@@ -27,6 +28,7 @@ export default function CommandsScreen() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(true);
+  const { colors } = useTheme();
 
   async function fetchCommands(reset: boolean, device: string, status: StatusFilter) {
     try {
@@ -92,16 +94,16 @@ export default function CommandsScreen() {
   function statusColor(status: string): string {
     if (status === 'pending') return '#ff9800';
     if (status === 'acknowledged') return '#4caf50';
-    return '#444';
+    return colors.textMuted;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.filterRow}>
         <TextInput
-          style={styles.filterInput}
+          style={[styles.filterInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.text }]}
           placeholder="Filter by device ID..."
-          placeholderTextColor="#444"
+          placeholderTextColor={colors.placeholderText}
           value={deviceFilter}
           onChangeText={setDeviceFilter}
           onSubmitEditing={applyDeviceFilter}
@@ -109,8 +111,8 @@ export default function CommandsScreen() {
           autoCorrect={false}
           returnKeyType="search"
         />
-        <TouchableOpacity style={styles.filterBtn} onPress={applyDeviceFilter}>
-          <Text style={styles.filterBtnText}>Apply</Text>
+        <TouchableOpacity style={[styles.filterBtn, { backgroundColor: colors.filterBtnBg }]} onPress={applyDeviceFilter}>
+          <Text style={[styles.filterBtnText, { color: colors.filterBtnText }]}>Apply</Text>
         </TouchableOpacity>
       </View>
 
@@ -118,10 +120,18 @@ export default function CommandsScreen() {
         {STATUS_FILTERS.map(s => (
           <TouchableOpacity
             key={s}
-            style={[styles.chip, statusFilter === s && styles.chipActive]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.bgCard, borderColor: colors.border },
+              statusFilter === s && { backgroundColor: colors.chipActiveBg, borderColor: colors.accent },
+            ]}
             onPress={() => setStatusFilter(s)}
           >
-            <Text style={[styles.chipText, statusFilter === s && styles.chipTextActive]}>
+            <Text style={[
+              styles.chipText,
+              { color: colors.textSecondary },
+              statusFilter === s && { color: colors.accent, fontWeight: '600' },
+            ]}>
               {s}
             </Text>
           </TouchableOpacity>
@@ -130,13 +140,13 @@ export default function CommandsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#e53935" size="large" />
+          <ActivityIndicator color={colors.accent} size="large" />
         </View>
       ) : error ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={applyDeviceFilter} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
+          <Text style={[styles.errorText, { color: colors.accent }]}>{error}</Text>
+          <TouchableOpacity onPress={applyDeviceFilter} style={[styles.retryBtn, { backgroundColor: colors.filterBtnBg }]}>
+            <Text style={[styles.retryText, { color: colors.filterBtnText }]}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -146,31 +156,31 @@ export default function CommandsScreen() {
           renderItem={({ item }) => {
             const color = statusColor(item.status);
             return (
-              <View style={styles.row}>
+              <View style={[styles.row, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <View style={styles.rowTop}>
-                  <Text style={styles.command} numberOfLines={1}>
+                  <Text style={[styles.command, { color: colors.text }]} numberOfLines={1}>
                     {item.command}
                   </Text>
                   <View style={[styles.statusBadge, { backgroundColor: color + '22' }]}>
                     <Text style={[styles.statusText, { color }]}>{item.status}</Text>
                   </View>
                 </View>
-                <Text style={styles.mono}>Device: {item.device_id}</Text>
+                <Text style={[styles.mono, { color: colors.textSecondary }]}>Device: {item.device_id}</Text>
                 {item.payload && Object.keys(item.payload).length > 0 && (
-                  <Text style={styles.mono} numberOfLines={2}>
+                  <Text style={[styles.mono, { color: colors.textSecondary }]} numberOfLines={2}>
                     Payload: {JSON.stringify(item.payload)}
                   </Text>
                 )}
                 <View style={styles.timeRow}>
-                  <Text style={styles.metaText}>
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
                     Issued: {new Date(item.issued_at).toLocaleString()}
                   </Text>
-                  <Text style={styles.metaText}>
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
                     Expires: {new Date(item.valid_until).toLocaleString()}
                   </Text>
                 </View>
                 {item.acknowledged_at && (
-                  <Text style={styles.metaText}>
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
                     Ack'd: {new Date(item.acknowledged_at).toLocaleString()}
                   </Text>
                 )}
@@ -178,16 +188,16 @@ export default function CommandsScreen() {
             );
           }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e53935" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator color="#e53935" style={{ margin: 16 }} />
+              <ActivityIndicator color={colors.accent} style={{ margin: 16 }} />
             ) : null
           }
-          ListEmptyComponent={<Text style={styles.emptyText}>No commands found.</Text>}
+          ListEmptyComponent={<Text style={[styles.emptyText, { color: colors.textSecondary }]}>No commands found.</Text>}
           contentContainerStyle={styles.list}
         />
       )}
@@ -196,56 +206,19 @@ export default function CommandsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d0d0d' },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   filterRow: { flexDirection: 'row', padding: 12, paddingBottom: 8, gap: 8, alignItems: 'center' },
-  filterInput: {
-    flex: 1,
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderColor: '#1e1e1e',
-    borderRadius: 6,
-    color: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 13,
-  },
-  filterBtn: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  filterBtnText: { color: '#aaa', fontSize: 13 },
+  filterInput: { flex: 1, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13 },
+  filterBtn: { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
+  filterBtnText: { fontSize: 13 },
   chipRow: { flexDirection: 'row', paddingHorizontal: 12, paddingBottom: 10, gap: 6 },
-  chip: {
-    backgroundColor: '#141414',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: '#1e1e1e',
-  },
-  chipActive: { backgroundColor: '#1a0000', borderColor: '#e53935' },
-  chipText: { color: '#555', fontSize: 12 },
-  chipTextActive: { color: '#e53935', fontWeight: '600' },
+  chip: { borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 },
+  chipText: { fontSize: 12 },
   list: { padding: 12 },
-  row: {
-    backgroundColor: '#141414',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#1e1e1e',
-  },
-  rowTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
+  row: { borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1 },
+  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   command: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
@@ -254,16 +227,11 @@ const styles = StyleSheet.create({
   },
   statusBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
   statusText: { fontSize: 11, fontWeight: '600' },
-  mono: {
-    color: '#777',
-    fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    marginBottom: 2,
-  },
+  mono: { fontSize: 12, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', marginBottom: 2 },
   timeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4 },
-  metaText: { color: '#555', fontSize: 12 },
-  errorText: { color: '#e53935', fontSize: 15, marginBottom: 16, textAlign: 'center' },
-  retryBtn: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-  retryText: { color: '#aaa' },
-  emptyText: { color: '#555', textAlign: 'center', marginTop: 40 },
+  metaText: { fontSize: 12 },
+  errorText: { fontSize: 15, marginBottom: 16, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  retryText: {},
+  emptyText: { textAlign: 'center', marginTop: 40 },
 });

@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { getUsers, getLogs, getCommands, getDevices, Log } from '../../lib/api';
+import { useTheme } from '../../lib/theme';
 
 interface DashboardStats {
   totalUsers: number;
@@ -27,6 +28,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { colors } = useTheme();
 
   async function fetchStats() {
     try {
@@ -68,64 +70,64 @@ export default function DashboardScreen() {
   }, []);
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color="#e53935" size="large" /></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator color={colors.accent} size="large" />
+      </View>
+    );
   }
 
   if (error || !stats) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error ?? 'Failed to load.'}</Text>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Text style={{ color: colors.accent, fontSize: 15 }}>{error ?? 'Failed to load.'}</Text>
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e53935" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
-      {/* Users + Devices */}
-      <Text style={styles.sectionTitle}>OVERVIEW</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>OVERVIEW</Text>
       <View style={styles.chipRow}>
-        <StatChip label="Users" value={stats.totalUsers} />
-        <StatChip label="Active" value={stats.activeUsers} color="#4caf50" />
-        <StatChip label="Admins" value={stats.adminCount} color="#e53935" />
-        <StatChip label="Devices" value={stats.activeDevices} color="#64b5f6" />
+        <StatChip label="Users" value={stats.totalUsers} colors={colors} />
+        <StatChip label="Active" value={stats.activeUsers} color="#4caf50" colors={colors} />
+        <StatChip label="Admins" value={stats.adminCount} color={colors.accent} colors={colors} />
+        <StatChip label="Devices" value={stats.activeDevices} color="#64b5f6" colors={colors} />
       </View>
 
-      {/* Last 24 hours */}
-      <Text style={styles.sectionTitle}>LAST 24 HOURS</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LAST 24 HOURS</Text>
       <View style={styles.chipRow}>
-        <StatChip label="Events" value={stats.events24h} />
-        <StatChip label="Success" value={stats.success24h} color="#4caf50" />
-        <StatChip label="Failures" value={stats.fail24h} color="#e53935" />
+        <StatChip label="Events" value={stats.events24h} colors={colors} />
+        <StatChip label="Success" value={stats.success24h} color="#4caf50" colors={colors} />
+        <StatChip label="Failures" value={stats.fail24h} color={colors.accent} colors={colors} />
       </View>
 
-      {/* Commands */}
-      <Text style={styles.sectionTitle}>COMMANDS</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMMANDS</Text>
       <View style={styles.chipRow}>
-        <StatChip label="Pending" value={stats.pendingCommands} color={stats.pendingCommands > 0 ? '#ff9800' : '#888'} />
+        <StatChip label="Pending" value={stats.pendingCommands} color={stats.pendingCommands > 0 ? '#ff9800' : colors.textSecondary} colors={colors} />
       </View>
 
-      {/* Recent failures */}
-      <Text style={styles.sectionTitle}>RECENT FAILURES</Text>
-      <View style={styles.card}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RECENT FAILURES</Text>
+      <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
         {stats.recentFailures.length === 0 ? (
-          <Text style={styles.emptyText}>No recent failures.</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>No recent failures.</Text>
         ) : (
           stats.recentFailures.map((log, i) => (
             <View key={log.id}>
-              {i > 0 && <View style={styles.divider} />}
+              {i > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
               <View style={styles.logRow}>
-                <View style={styles.resultBadge}>
-                  <Text style={styles.resultText}>FAIL</Text>
+                <View style={[styles.resultBadge, { backgroundColor: colors.accent + '22' }]}>
+                  <Text style={[styles.resultText, { color: colors.accent }]}>FAIL</Text>
                 </View>
                 <View style={styles.logMeta}>
-                  <Text style={styles.logDevice}>{log.device_id}</Text>
-                  <Text style={styles.logTime}>{new Date(log.timestamp).toLocaleString()}</Text>
+                  <Text style={[styles.logDevice, { color: colors.textSecondary }]}>{log.device_id}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{new Date(log.timestamp).toLocaleString()}</Text>
                 </View>
-                <Text style={styles.fingerprintId}>#{log.fingerprint_id}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>#{log.fingerprint_id}</Text>
               </View>
             </View>
           ))
@@ -135,45 +137,36 @@ export default function DashboardScreen() {
   );
 }
 
-function StatChip({ label, value, color = '#888' }: { label: string; value: number; color?: string }) {
+function StatChip({ label, value, color, colors }: {
+  label: string;
+  value: number;
+  color?: string;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
   return (
-    <View style={chipStyles.container}>
-      <Text style={[chipStyles.value, { color }]}>{value}</Text>
-      <Text style={chipStyles.label}>{label}</Text>
+    <View style={[chipStyles.container, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+      <Text style={[chipStyles.value, { color: color ?? colors.textSecondary }]}>{value}</Text>
+      <Text style={[chipStyles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d0d0d' },
-  center: { flex: 1, backgroundColor: '#0d0d0d', justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 16, paddingBottom: 40 },
-  sectionTitle: { color: '#444', fontSize: 11, letterSpacing: 1.5, marginBottom: 8, marginLeft: 4 },
+  sectionTitle: { fontSize: 11, letterSpacing: 1.5, marginBottom: 8, marginLeft: 4 },
   chipRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
-  card: {
-    backgroundColor: '#141414', borderRadius: 10, borderWidth: 1,
-    borderColor: '#1e1e1e', padding: 14, marginBottom: 24,
-  },
-  divider: { height: 1, backgroundColor: '#1e1e1e', marginVertical: 10 },
+  card: { borderRadius: 10, borderWidth: 1, padding: 14, marginBottom: 24 },
+  divider: { height: 1, marginVertical: 10 },
   logRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultBadge: { backgroundColor: '#e5393522', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
-  resultText: { color: '#e53935', fontSize: 11, fontWeight: '700' },
+  resultBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
+  resultText: { fontSize: 11, fontWeight: '700' },
   logMeta: { flex: 1 },
-  logDevice: {
-    color: '#888', fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  logTime: { color: '#555', fontSize: 12 },
-  fingerprintId: { color: '#444', fontSize: 12 },
-  emptyText: { color: '#555', fontSize: 13 },
-  errorText: { color: '#e53935', fontSize: 15 },
+  logDevice: { fontSize: 12, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
 });
 
 const chipStyles = StyleSheet.create({
-  container: {
-    flex: 1, backgroundColor: '#141414', borderRadius: 8, padding: 10,
-    alignItems: 'center', borderWidth: 1, borderColor: '#1e1e1e',
-  },
+  container: { flex: 1, borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1 },
   value: { fontSize: 20, fontWeight: '700' },
-  label: { color: '#555', fontSize: 11, marginTop: 2 },
+  label: { fontSize: 11, marginTop: 2 },
 });

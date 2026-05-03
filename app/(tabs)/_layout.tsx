@@ -2,6 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { deleteToken } from '../../lib/storage';
+import { useTheme } from '../../lib/theme';
 
 function LogoutButton() {
   const router = useRouter();
@@ -28,19 +29,21 @@ function LogoutButton() {
 }
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#0d0d0d',
-          borderTopColor: '#1a1a1a',
+          backgroundColor: colors.bg,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
         },
-        tabBarActiveTintColor: '#e53935',
-        tabBarInactiveTintColor: '#444',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontSize: 11, letterSpacing: 0.5 },
-        headerStyle: { backgroundColor: '#0d0d0d' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', letterSpacing: 1 },
         headerShadowVisible: false,
         headerRight: () => <LogoutButton />,

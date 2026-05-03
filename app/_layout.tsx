@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { getToken } from '../lib/storage';
+import { ThemeProvider, useTheme } from '../lib/theme';
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const router = useRouter();
   const segments = useSegments();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     getToken().then(token => {
@@ -21,8 +23,16 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutInner />
+    </ThemeProvider>
   );
 }
