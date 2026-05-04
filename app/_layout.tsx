@@ -1,13 +1,29 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { getToken } from '../lib/storage';
 import { ThemeProvider, useTheme } from '../lib/theme';
+import { useFailedLogNotifications } from '../lib/useFailedLogNotifications';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function RootLayoutInner() {
   const router = useRouter();
   const segments = useSegments();
   const { isDark } = useTheme();
+
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
+  }, []);
+
+  useFailedLogNotifications();
 
   useEffect(() => {
     getToken().then(token => {

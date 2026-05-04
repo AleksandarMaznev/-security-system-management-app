@@ -3,11 +3,11 @@
     "name": "SecSys Admin",
     "slug": "security-system-admin",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "scheme": "secsys",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.secsys.admin"
     },
     "android": {
@@ -19,7 +19,8 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
